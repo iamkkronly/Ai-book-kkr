@@ -7,139 +7,65 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 700px;
-            margin: 50px auto;
-            background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            background-color: #f4f4f4;
         }
         h1 {
             color: #333;
         }
         textarea {
-            width: 100%;
+            width: 80%;
             height: 100px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            margin-top: 10px;
         }
         button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            border: none;
-            background: #007bff;
-            color: white;
+            padding: 10px;
             font-size: 16px;
-            border-radius: 5px;
+            margin-top: 10px;
             cursor: pointer;
-        }
-        button:hover {
-            background: #0056b3;
         }
         #output {
             margin-top: 20px;
             padding: 10px;
-            background: #eef;
+            background: white;
             border-radius: 5px;
-            text-align: left;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>AI Book Writer</h1>
-        <p>Enter a book topic, and the AI will generate content step by step.</p>
-        <textarea id="userInput" placeholder="Enter book idea..."></textarea>
-        <button onclick="generateOutline()">Generate Outline</button>
-        <button onclick="generateNextSection()">Generate Next Section</button>
-        <div id="output"></div>
-    </div>
+
+    <h1>AI Book Writer</h1>
+    <p>Enter your book idea:</p>
+    <textarea id="userInput" placeholder="Write your book topic here..."></textarea><br>
+    <button onclick="generateBook()">Generate Book</button>
+    
+    <div id="output"></div>
 
     <script>
-        let bookOutline = "";
-        let sectionIndex = 0;
+        async function generateBook() {
+            const input = document.getElementById("userInput").value;
+            const apiKey = "AIzaSyADBj7tcn8xTYcj2ndoMIek2dH-lqjfF4Y"; // Replace with your Google API Key
 
-        async function generateOutline() {
-            const userInput = document.getElementById("userInput").value;
-            const outputDiv = document.getElementById("output");
-
-            if (userInput.trim() === "") {
-                outputDiv.innerHTML = "<p style='color: red;'>Please enter a book idea.</p>";
+            if (!input) {
+                alert("Please enter a book idea!");
                 return;
             }
 
-            outputDiv.innerHTML = "<p>Generating outline...</p>";
+            document.getElementById("output").innerHTML = "Generating book... Please wait.";
 
-            const apiKey = "AIzaSyC2VtkAAgipQ1ZRv3OL0o6ElBqr3lu18YA";  
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=" + apiKey;
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateText?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    prompt: { text: `Write a book based on this idea: ${input}` }
+                })
+            });
 
-            const requestBody = {
-                prompt: { text: "Create a detailed chapter-wise outline for a book on: " + userInput },
-                max_tokens: 1000
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(requestBody)
-                });
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0) {
-                    bookOutline = result.candidates[0].output;
-                    sectionIndex = 0;
-                    outputDiv.innerHTML = "<h3>Book Outline:</h3><p>" + bookOutline + "</p>";
-                } else {
-                    outputDiv.innerHTML = "<p style='color: red;'>No response from AI.</p>";
-                }
-            } catch (error) {
-                outputDiv.innerHTML = "<p style='color: red;'>Error: " + error.message + "</p>";
-            }
-        }
-
-        async function generateNextSection() {
-            if (bookOutline === "") {
-                document.getElementById("output").innerHTML = "<p style='color: red;'>Generate an outline first!</p>";
-                return;
-            }
-
-            const outputDiv = document.getElementById("output");
-            outputDiv.innerHTML += "<p>Generating section " + (sectionIndex + 1) + "...</p>";
-
-            const apiKey = "YOUR_GEMINI_API_KEY";
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateText?key=" + apiKey;
-
-            const requestBody = {
-                prompt: { text: "Write a detailed section based on the book outline:\n\n" + bookOutline + "\n\nStart with Section " + (sectionIndex + 1) },
-                max_tokens: 1500  
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(requestBody)
-                });
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0) {
-                    outputDiv.innerHTML += "<h3>Section " + (sectionIndex + 1) + ":</h3><p>" + result.candidates[0].output + "</p>";
-                    sectionIndex++;
-                } else {
-                    outputDiv.innerHTML += "<p style='color: red;'>No response from AI.</p>";
-                }
-            } catch (error) {
-                outputDiv.innerHTML += "<p style='color: red;'>Error: " + error.message + "</p>";
-            }
+            const data = await response.json();
+            document.getElementById("output").innerHTML = data?.candidates?.[0]?.output || "Failed to generate book. Try again!";
         }
     </script>
+
 </body>
 </html>
